@@ -208,3 +208,25 @@ variable "enable_detailed_monitoring" {
   type        = bool
   default     = false
 }
+
+variable "bucket_name" {
+  description = "Name of the existing S3 bucket that will trigger the Lambda function"
+  type        = string
+}
+
+variable "cloudfront_distribution_id" {
+  description = "ID of the existing CloudFront distribution to invalidate"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region for the Lambda function"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "lambda_function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "cloudfront-cache-invalidator"
+}
