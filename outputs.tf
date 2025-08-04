@@ -193,3 +193,33 @@ output "cloudwatch_log_group_names" {
   description = "Names of CloudWatch log groups"
   value       = module.monitoring.cloudwatch_log_group_names
 }
+
+output "lambda_function_name" {
+  description = "Name of the Lambda function"
+  value       = aws_lambda_function.cloudfront_invalidator.function_name
+}
+
+output "lambda_function_arn" {
+  description = "ARN of the Lambda function"
+  value       = aws_lambda_function.cloudfront_invalidator.arn
+}
+
+output "lambda_role_arn" {
+  description = "ARN of the Lambda IAM role"
+  value       = aws_iam_role.lambda_role.arn
+}
+
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group for the Lambda function"
+  value       = aws_cloudwatch_log_group.lambda_log_group.name
+}
+
+output "s3_bucket_name" {
+  description = "Name of the S3 bucket configured for notifications"
+  value       = data.aws_s3_bucket.existing_bucket.bucket
+}
+
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution being invalidated"
+  value       = data.aws_cloudfront_distribution.existing_distribution.id
+}

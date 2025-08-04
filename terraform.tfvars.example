@@ -1,0 +1,14 @@
+# Example configuration for CloudFront Cache Invalidation Lambda
+# Copy this file to terraform.tfvars and update with your actual values
+
+# Required: Name of your existing S3 bucket
+bucket_name = "my-existing-s3-bucket"
+
+# Required: ID of your existing CloudFront distribution
+cloudfront_distribution_id = "E1234567890ABC"
+
+# Optional: AWS region (defaults to us-east-1)
+aws_region = "us-east-1"
+
+# Optional: Lambda function name (defaults to cloudfront-cache-invalidator)
+lambda_function_name = "my-cloudfront-invalidator"
