@@ -1,0 +1,10 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update the values
+
+# Required variables
+bucket_name = "your-existing-s3-bucket-name"
+cloudfront_distribution_id = "E1234567890ABCD"
+
+# Optional variables (with defaults)
+lambda_runtime = "nodejs18.x"  # or "python3.9" for Python version
+lambda_function_name = "cloudfront-cache-invalidator"

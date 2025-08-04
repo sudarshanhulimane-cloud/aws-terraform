@@ -1,0 +1,12 @@
+{
+  "name": "cloudfront-cache-invalidator",
+  "version": "1.0.0",
+  "description": "Lambda function to invalidate CloudFront cache on S3 object creation",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1450.0"
+  },
+  "scripts": {
+    "package": "zip -r lambda_function.zip ."
+  }
+}
