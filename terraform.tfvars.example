@@ -1,0 +1,14 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update the values
+
+# Required variables
+bucket_name = "your-existing-s3-bucket-name"
+cloudfront_distribution_id = "E1234567890ABCD"
+
+# Optional variables with defaults
+lambda_function_name = "cloudfront-invalidation-lambda"
+s3_event_filter_prefix = ""  # Leave empty to process all objects
+s3_event_filter_suffix = ""  # Leave empty to process all objects
+lambda_timeout = 30
+lambda_memory_size = 128
+log_retention_days = 14

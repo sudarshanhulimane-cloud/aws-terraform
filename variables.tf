@@ -208,3 +208,49 @@ variable "enable_detailed_monitoring" {
   type        = bool
   default     = false
 }
+
+variable "bucket_name" {
+  description = "Name of the existing S3 bucket"
+  type        = string
+}
+
+variable "cloudfront_distribution_id" {
+  description = "ID of the existing CloudFront distribution"
+  type        = string
+}
+
+variable "lambda_function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "cloudfront-invalidation-lambda"
+}
+
+variable "s3_event_filter_prefix" {
+  description = "S3 event filter prefix (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "s3_event_filter_suffix" {
+  description = "S3 event filter suffix (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_timeout" {
+  description = "Lambda function timeout in seconds"
+  type        = number
+  default     = 30
+}
+
+variable "lambda_memory_size" {
+  description = "Lambda function memory size in MB"
+  type        = number
+  default     = 128
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 14
+}
