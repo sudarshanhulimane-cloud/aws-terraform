@@ -208,3 +208,25 @@ variable "enable_detailed_monitoring" {
   type        = bool
   default     = false
 }
+
+variable "bucket_name" {
+  description = "Name of the existing S3 bucket"
+  type        = string
+}
+
+variable "cloudfront_distribution_id" {
+  description = "ID of the existing CloudFront distribution"
+  type        = string
+}
+
+variable "lambda_runtime" {
+  description = "Runtime for the Lambda function"
+  type        = string
+  default     = "nodejs18.x"
+}
+
+variable "lambda_function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "cloudfront-cache-invalidator"
+}
