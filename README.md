@@ -1,367 +1,169 @@
-# AWS Infrastructure Terraform Modules
+# CloudFront Invalidation Lambda Function
 
-This repository contains a comprehensive, modular Terraform configuration for deploying a complete AWS infrastructure stack. The configuration is designed to be reusable, scalable, and follows Terraform best practices.
+This Terraform configuration sets up a Lambda function that automatically invalidates CloudFront cache when objects are created in an S3 bucket. The Lambda function is triggered by S3 event notifications and uses the CloudFront CreateInvalidation API to clear the cache for the specific object.
 
-## 🏗️ Architecture Overview
+## Features
 
-The infrastructure includes the following components:
+- **Automatic Cache Invalidation**: Triggers CloudFront invalidation when S3 objects are created
+- **Flexible Filtering**: Optional prefix and suffix filters for S3 events
+- **Comprehensive Logging**: CloudWatch logs for monitoring and debugging
+- **Secure IAM**: Minimal required permissions for CloudFront and CloudWatch
+- **Multiple Language Support**: Available in both Node.js and Python
 
-### 1. **Networking** (`modules/networking`)
-- VPC with configurable CIDR block
-- 2 public subnets and 2 private subnets across 2 availability zones
-- Internet Gateway for public internet access
-- NAT Gateway for private subnet internet access
-- Route Tables with appropriate routing rules
-- Optional VPC Flow Logs
+## Prerequisites
 
-### 2. **Security** (`modules/security`)
-- Security Groups for:
-  - **Bastion Host**: SSH access from configurable CIDR blocks
-  - **Application Load Balancer**: HTTP/HTTPS from anywhere
-  - **Application Servers**: Internal communication and SSH from bastion
-  - **EKS Cluster & Nodes**: Kubernetes communication
-  - **RDS Database**: Database access from application tiers
-- Configurable ports, protocols, and source IPs
+- Terraform installed (version >= 1.0)
+- AWS CLI configured with appropriate permissions
+- Existing S3 bucket
+- Existing CloudFront distribution
+- Node.js or Python (for building the Lambda package)
 
-### 3. **Compute** (`modules/compute`)
-- **Bastion Host**: Secure SSH access point in public subnet
-- **Auto Scaling Group**: Optional scalable application servers
-- Launch Templates with user data scripts
-- CloudWatch alarms for auto scaling
-- Support for custom AMIs and instance types
+## Required Permissions
 
-### 4. **Load Balancing** (`modules/load_balancer`)
-- Application Load Balancer in public subnets
-- Target Groups with health checks
-- HTTP and HTTPS listeners
-- SSL/TLS termination support
-- Custom listener rules support
-- Optional WAF integration
+The AWS credentials used must have permissions to:
+- Create and manage Lambda functions
+- Create and manage IAM roles and policies
+- Create CloudWatch log groups
+- Configure S3 bucket notifications
+- Read existing S3 bucket and CloudFront distribution
 
-### 5. **Container Orchestration** (`modules/eks`)
-- Amazon EKS Cluster with configurable Kubernetes version
-- Managed Node Groups with auto scaling
-- Cluster logging enabled
-- Security group integration
-- IAM roles with least privilege access
+## Quick Start
 
-### 6. **Storage** (`modules/storage`)
-- S3 bucket with:
-  - Versioning support
-  - Server-side encryption (AES-256)
-  - Public access blocked
-  - Lifecycle policies
-- Optional EBS volumes with encryption
+1. **Clone or download this repository**
 
-### 7. **Database** (`modules/database`)
-- RDS instance (PostgreSQL or MySQL)
-- Database subnet group in private subnets
-- Parameter groups for performance tuning
-- Option groups (MySQL only)
-- Automated backups and maintenance windows
-- Optional read replicas
-- Enhanced monitoring and Performance Insights
-- Secrets Manager integration for password management
-
-### 8. **DNS & Routing** (`modules/dns`)
-- Route 53 hosted zone
-- A records for ALB and bastion host
-- Health checks for high availability
-
-### 9. **Monitoring** (`modules/monitoring`)
-- CloudWatch Log Groups for all services
-- CloudWatch Alarms for:
-  - CPU utilization (EC2, RDS)
-  - ALB response times
-  - Custom metrics
-- Configurable retention periods
-
-### 10. **IAM** (`modules/iam`)
-- IAM roles and policies for:
-  - EC2 instances (SSM, CloudWatch, S3 access)
-  - EKS cluster and worker nodes
-  - RDS enhanced monitoring
-  - AWS Load Balancer Controller
-  - Cluster Autoscaler
-- Least privilege access principles
-
-## 📁 Project Structure
-
-```
-.
-├── main.tf                                    # Root module orchestration
-├── variables.tf                               # Root module variables
-├── outputs.tf                                 # Root module outputs
-├── terraform.tf                               # Provider and backend configuration
-├── README.md                                  # This file
-│
-├── modules/
-│   ├── networking/
-│   │   ├── main.tf                           # VPC, subnets, gateways, routing
-│   │   ├── variables.tf                      # Network configuration variables
-│   │   └── outputs.tf                        # VPC and subnet outputs
-│   │
-│   ├── security/
-│   │   ├── main.tf                           # Security groups and rules
-│   │   ├── variables.tf                      # Security configuration variables
-│   │   └── outputs.tf                        # Security group outputs
-│   │
-│   ├── iam/
-│   │   ├── main.tf                           # IAM roles, policies, instance profiles
-│   │   ├── variables.tf                      # IAM configuration variables
-│   │   └── outputs.tf                        # IAM resource outputs
-│   │
-│   ├── compute/
-│   │   ├── main.tf                           # EC2 instances, ASG, launch templates
-│   │   ├── variables.tf                      # Compute configuration variables
-│   │   ├── outputs.tf                        # Instance and ASG outputs
-│   │   └── user_data/
-│   │       ├── bastion_user_data.sh          # Bastion host initialization script
-│   │       └── app_server_user_data.sh       # Application server setup script
-│   │
-│   ├── load_balancer/
-│   │   ├── main.tf                           # ALB, target groups, listeners
-│   │   ├── variables.tf                      # Load balancer configuration
-│   │   └── outputs.tf                        # ALB and target group outputs
-│   │
-│   ├── eks/
-│   │   ├── main.tf                           # EKS cluster and node groups
-│   │   ├── variables.tf                      # EKS configuration variables
-│   │   └── outputs.tf                        # EKS cluster outputs
-│   │
-│   ├── storage/
-│   │   ├── main.tf                           # S3 bucket and EBS volumes
-│   │   ├── variables.tf                      # Storage configuration variables
-│   │   └── outputs.tf                        # Storage resource outputs
-│   │
-│   ├── database/
-│   │   ├── main.tf                           # RDS instance, subnet group, parameters
-│   │   ├── variables.tf                      # Database configuration variables
-│   │   └── outputs.tf                        # Database outputs
-│   │
-│   ├── dns/
-│   │   ├── main.tf                           # Route 53 hosted zone and records
-│   │   ├── variables.tf                      # DNS configuration variables
-│   │   └── outputs.tf                        # DNS outputs
-│   │
-│   └── monitoring/
-│       ├── main.tf                           # CloudWatch logs and alarms
-│       ├── variables.tf                      # Monitoring configuration variables
-│       └── outputs.tf                        # Monitoring outputs
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-1. **AWS CLI** configured with appropriate credentials
-2. **Terraform** >= 1.0 installed
-3. **AWS Account** with appropriate permissions
-4. **EC2 Key Pair** created for SSH access (optional)
-
-### Deployment Steps
-
-1. **Clone and Navigate**
+2. **Configure variables**:
    ```bash
-   git clone <repository-url>
-   cd aws-terraform-infrastructure
+   cp terraform.tfvars.example terraform.tfvars
    ```
-
-2. **Configure Variables**
-   Create a `terraform.tfvars` file:
+   Edit `terraform.tfvars` with your actual values:
    ```hcl
-   # Basic Configuration
-   project_name = "my-project"
-   environment  = "dev"
-   aws_region   = "us-west-2"
-   
-   # Networking
-   vpc_cidr = "10.0.0.0/16"
-   availability_zones = ["us-west-2a", "us-west-2b"]
-   
-   # Security
-   bastion_allowed_cidrs = ["YOUR_IP/32"]
-   ssh_key_name = "your-key-pair-name"
-   
-   # Optional: Enable features
-   enable_auto_scaling = true
-   create_route53_zone = true
-   domain_name = "your-domain.com"
+   bucket_name = "your-actual-bucket-name"
+   cloudfront_distribution_id = "E1234567890ABCD"
    ```
 
-3. **Initialize Terraform**
+3. **Build the Lambda deployment package**:
+   ```bash
+   # For Node.js (default)
+   ./build_lambda.sh nodejs
+   
+   # For Python
+   ./build_lambda.sh python
+   ```
+
+4. **Deploy with Terraform**:
    ```bash
    terraform init
-   ```
-
-4. **Plan Deployment**
-   ```bash
    terraform plan
-   ```
-
-5. **Deploy Infrastructure**
-   ```bash
    terraform apply
    ```
 
-6. **Access Resources**
-   - Bastion Host: Use the public IP from outputs
-   - Application Load Balancer: Use the DNS name from outputs
-   - RDS Password: Stored in AWS Secrets Manager
+## Configuration
 
-## 🔧 Configuration Options
+### Required Variables
 
-### Key Variables
+| Variable | Description | Type |
+|----------|-------------|------|
+| `bucket_name` | Name of the existing S3 bucket | string |
+| `cloudfront_distribution_id` | ID of the existing CloudFront distribution | string |
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `project_name` | Name of the project | `aws-infrastructure` | No |
-| `environment` | Environment (dev/staging/prod) | `dev` | No |
-| `aws_region` | AWS region for deployment | `us-west-2` | No |
-| `vpc_cidr` | CIDR block for VPC | `10.0.0.0/16` | No |
-| `ssh_key_name` | EC2 Key Pair for SSH access | `""` | Yes (for SSH) |
-| `bastion_allowed_cidrs` | CIDRs allowed to SSH to bastion | `["0.0.0.0/0"]` | No |
-| `enable_auto_scaling` | Enable Auto Scaling Group | `false` | No |
-| `rds_engine` | Database engine (postgres/mysql) | `postgres` | No |
-| `create_route53_zone` | Create Route 53 hosted zone | `false` | No |
+### Optional Variables
 
-### Advanced Configuration
+| Variable | Description | Type | Default |
+|----------|-------------|------|---------|
+| `lambda_function_name` | Name of the Lambda function | string | `"cloudfront-invalidation-lambda"` |
+| `s3_event_filter_prefix` | S3 event filter prefix | string | `""` |
+| `s3_event_filter_suffix` | S3 event filter suffix | string | `""` |
+| `lambda_timeout` | Lambda function timeout in seconds | number | `30` |
+| `lambda_memory_size` | Lambda function memory size in MB | number | `128` |
+| `log_retention_days` | CloudWatch log retention in days | number | `14` |
 
-#### Database Engine Selection
-```hcl
-# PostgreSQL (default)
-rds_engine = "postgres"
-rds_engine_version = "15.4"
+## Architecture
 
-# MySQL
-rds_engine = "mysql"
-rds_engine_version = "8.0"
+```
+S3 Bucket → Event Notification → Lambda Function → CloudFront Invalidation
 ```
 
-#### Auto Scaling Configuration
-```hcl
-enable_auto_scaling = true
-asg_min_size = 1
-asg_max_size = 5
-asg_desired_capacity = 2
-```
+1. **S3 Event**: When an object is created in the S3 bucket, it triggers an event notification
+2. **Lambda Trigger**: The event notification invokes the Lambda function
+3. **Cache Invalidation**: The Lambda function creates a CloudFront invalidation for the specific object
+4. **Logging**: All operations are logged to CloudWatch for monitoring
 
-#### EKS Configuration
-```hcl
-eks_cluster_version = "1.28"
-eks_node_instance_types = ["t3.medium", "t3.large"]
-eks_node_group_min_size = 1
-eks_node_group_max_size = 5
-```
+## IAM Permissions
 
-## 🔒 Security Best Practices
+The Lambda function's execution role includes the following permissions:
 
-This configuration implements several security best practices:
+- `cloudfront:CreateInvalidation` - To create CloudFront invalidations
+- `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` - For CloudWatch logging
 
-1. **Network Segmentation**: Public and private subnets with proper routing
-2. **Least Privilege Access**: IAM roles with minimal required permissions
-3. **Encryption**: 
-   - EBS volumes encrypted by default
-   - S3 bucket with server-side encryption
-   - RDS encryption enabled
-4. **Secret Management**: Database passwords stored in AWS Secrets Manager
-5. **Security Groups**: Restrictive rules with minimal required access
-6. **Bastion Host**: Secure access point for private resources
-7. **VPC Flow Logs**: Optional network traffic monitoring
+## Monitoring
 
-## 📊 Monitoring and Observability
+### CloudWatch Logs
 
-### CloudWatch Integration
+The Lambda function logs to CloudWatch with the following information:
+- S3 event details
+- CloudFront invalidation parameters
+- Success/failure status
+- Error messages (if any)
 
-- **Log Groups**: Centralized logging for all services
-- **Metrics**: Custom metrics for application performance
-- **Alarms**: Automated alerting for system health
-- **Dashboards**: Visual monitoring (can be added)
+### Log Group
 
-### Available Metrics
+The log group is created at: `/aws/lambda/{lambda_function_name}`
 
-- EC2 CPU utilization
-- RDS performance metrics
-- ALB response times
-- EKS cluster health
-- Auto Scaling Group metrics
+## Testing
 
-## 🛠️ Customization
+To test the setup:
 
-### Adding New Services
+1. Upload a file to your S3 bucket
+2. Check the CloudWatch logs for the Lambda function
+3. Verify that a CloudFront invalidation was created in the AWS Console
 
-1. Create a new module directory under `modules/`
-2. Define `main.tf`, `variables.tf`, and `outputs.tf`
-3. Add module call in root `main.tf`
-4. Update root `variables.tf` and `outputs.tf`
+## Troubleshooting
 
-### Modifying Existing Modules
+### Common Issues
 
-Each module is self-contained and can be modified independently:
-- Update variables for new configuration options
-- Add resources for additional features
-- Modify outputs for new data requirements
+1. **Lambda function not triggered**:
+   - Check S3 bucket notification configuration
+   - Verify Lambda permission allows S3 invocation
+   - Check CloudWatch logs for errors
 
-## 🔄 Lifecycle Management
+2. **CloudFront invalidation fails**:
+   - Verify the CloudFront distribution ID is correct
+   - Check IAM permissions for CloudFront
+   - Ensure the distribution is not disabled
 
-### Updates and Maintenance
+3. **Build errors**:
+   - Ensure Node.js or Python is installed
+   - Check that the build script has execute permissions
+   - Verify all dependencies are available
 
+### Debugging
+
+Enable detailed logging by checking the CloudWatch logs:
 ```bash
-# Update Terraform modules
-terraform plan
-terraform apply
-
-# Refresh state
-terraform refresh
-
-# Check for drift
-terraform plan -detailed-exitcode
+aws logs tail /aws/lambda/{lambda_function_name} --follow
 ```
 
-### Backup and Recovery
+## Cleanup
 
-- **State Files**: Use remote state backend (S3 + DynamoDB)
-- **Database**: Automated backups with point-in-time recovery
-- **Infrastructure**: Version controlled Terraform code
-
-## 🧹 Cleanup
-
-To destroy all resources:
-
+To remove all resources:
 ```bash
 terraform destroy
 ```
 
-**Warning**: This will delete all resources. Ensure you have backups of important data.
+## Security Considerations
 
-## 📝 Notes
+- The Lambda function has minimal required permissions
+- CloudFront invalidations are scoped to specific objects
+- All operations are logged for audit purposes
+- Environment variables are used for configuration
 
-- RDS deletion protection is enabled by default
-- S3 bucket versioning is enabled by default
-- All resources are tagged consistently for cost tracking
-- EKS cluster logs are enabled for all log types
-- Enhanced monitoring available for RDS
+## Cost Optimization
 
-## 🤝 Contributing
+- CloudFront invalidations have associated costs
+- Consider using invalidation batching for high-frequency updates
+- Monitor Lambda execution time and memory usage
+- Adjust log retention period based on your needs
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+## License
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the Terraform documentation
-2. Review AWS service documentation
-3. Create an issue in this repository
-4. Check existing issues for solutions
-
----
-
-**Happy Terraforming! 🌍**
+This project is licensed under the MIT License.

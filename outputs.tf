@@ -193,3 +193,28 @@ output "cloudwatch_log_group_names" {
   description = "Names of CloudWatch log groups"
   value       = module.monitoring.cloudwatch_log_group_names
 }
+
+output "lambda_function_name" {
+  description = "Name of the created Lambda function"
+  value       = aws_lambda_function.cloudfront_invalidation.function_name
+}
+
+output "lambda_function_arn" {
+  description = "ARN of the created Lambda function"
+  value       = aws_lambda_function.cloudfront_invalidation.arn
+}
+
+output "lambda_role_arn" {
+  description = "ARN of the Lambda execution role"
+  value       = aws_iam_role.lambda_role.arn
+}
+
+output "cloudwatch_log_group_name" {
+  description = "Name of the CloudWatch log group"
+  value       = aws_cloudwatch_log_group.lambda_log_group.name
+}
+
+output "s3_bucket_notification_id" {
+  description = "ID of the S3 bucket notification configuration"
+  value       = aws_s3_bucket_notification.bucket_notification.id
+}
